@@ -85,28 +85,14 @@ function pdf_canonical_page_install() {
         // add htaccess file to upload directory
         $site_url = get_site_url();
         
-        if ( is_multisite() && get_current_blog_id() != 1 ) {
-            $directory = wp_upload_dir();
-            $multi_directory = $directory['basedir'] . '/sites/' . get_current_blog_id();
-            $ht_access_file = $multi_directory . '/.htaccess';
+        $directory = wp_upload_dir();
+        $ht_access_file = $directory['basedir'] . '/.htaccess';
+        $upload_path = $directory['baseurl'];
 
-            $site_id = get_current_blog_id();
-
-            $header = "RewriteCond %{REQUEST_URI} \.(pdf)$
+        $header = "RewriteCond %{REQUEST_URI} \.(pdf)$
 RewriteRule (.*) - [E=FILENAME:$1]
-Header add Link \"<$site_url/pdf-canonical/?file=$site_url/wp-content/uploads/sites/$site_id/%{FILENAME}e>; rel=\\\"canonical\\\"\"";
-        insert_with_markers($ht_access_file, 'Canonical',$header);
-
-        } else {
-            $directory = wp_upload_dir();
-            $ht_access_file = $directory['basedir'] . '/.htaccess';
-
-            $header = "RewriteCond %{REQUEST_URI} \.(pdf)$
-RewriteRule (.*) - [E=FILENAME:$1]
-Header add Link \"<$site_url/pdf-canonical/?file=$site_url/wp-content/uploads/%{FILENAME}e>; rel=\\\"canonical\\\"\"";
-        insert_with_markers($ht_access_file, 'Canonical',$header);
-        }
-
+Header add Link \"<$site_url/pdf-canonical/?file=$upload_path/%{FILENAME}e>; rel=\\\"canonical\\\"\"";
+    insert_with_markers($ht_access_file, 'Canonical',$header);
        
 }
 
@@ -115,16 +101,10 @@ Header add Link \"<$site_url/pdf-canonical/?file=$site_url/wp-content/uploads/%{
 register_deactivation_hook( __FILE__, 'pdf_canonical_deactivation' );
 
 function pdf_canonical_deactivation() {
-    if ( is_multisite() && get_current_blog_id() != 1 ) {
-        $directory = wp_upload_dir();
-        $multi_directory = $directory['basedir'] . '/sites/' . get_current_blog_id();
-        $ht_access_file = $multi_directory . '/.htaccess';
-        wp_delete_file($ht_access_file);
-    } else {
-         $directory = wp_upload_dir();
-        $ht_access_file = $directory['basedir'] . '/.htaccess';
-        wp_delete_file($ht_access_file);
-    }
+   
+    $directory = wp_upload_dir();
+    $ht_access_file = $directory['basedir'] . '/.htaccess';
+    wp_delete_file($ht_access_file);
    
 
     $page = get_page_by_path( 'pdf-canonical' );
