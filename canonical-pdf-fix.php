@@ -81,6 +81,30 @@ function pdf_canonical_page_install() {
                         update_post_meta($new_page_id, '_wp_page_template', $new_page_template);
                 }
         }
+
+        // add htaccess file to upload directory
+        $site_url = get_site_url();
+        $directory = wp_upload_dir();
+        $ht_access_file = $directory['basedir'] . '/.htaccess';
+        $header = "RewriteCond %{REQUEST_URI} \.(pdf)$
+RewriteRule (.*) - [E=FILENAME:$1]
+Header add Link \"<$site_url/pdf-canonical/?file=$site_url/wp-content/uploads/%{FILENAME}e>; rel=\\\"canonical\\\"\"";
+		insert_with_markers($ht_access_file, 'Canonical',$header);
+}
+// RewriteCond %{REQUEST_URI} \.(pdf)$
+// RewriteRule (.*) - [E=FILENAME:$1]
+// Header add Link "<http://caweb.test/pdf-canonical/?file=%{FILENAME}e.pdf>; rel=\"canonical\""
+
+// This creates the canonical tag in the htaccess file
+function can_attach_create_canonical($id,$filename,$canonical){
+//     //die("ID: $id --- filename: $filename --- canonical: $canonical");
+//     $directory = wp_upload_dir();
+//     $ht_access_file = $directory['basedir'] . '/.htaccess'; 
+//     $header = "RewriteRule ([^/]+)\.pdf$ - [E=FILENAME:$1]
+//     <Files \"\.pdf$\">
+// Header add Link \"<$canonical>; rel=\\\"canonical\\\"\"
+// </Files>";
+    // insert_with_markers($ht_access_file, 'Canonical '.$id,$header);
 }
 
 
@@ -89,6 +113,10 @@ function pdf_canonical_page_install() {
 register_deactivation_hook( __FILE__, 'pdf_canonical_deactivation' );
 
 function pdf_canonical_deactivation() {
+
+	$directory = wp_upload_dir();
+    $ht_access_file = $directory['basedir'] . '/.htaccess';
+    wp_delete_file($ht_access_file);
 
 	$page = get_page_by_path( 'pdf-canonical' );
     wp_delete_post($page->ID, true);
